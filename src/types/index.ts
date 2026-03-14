@@ -75,6 +75,7 @@ export interface ProductFilters {
   sort?: "newest" | "price_asc" | "price_desc" | "popular";
   search?: string;
   page?: number;
+  inStock?: boolean;
 }
 
 // ─── Cart Types ───

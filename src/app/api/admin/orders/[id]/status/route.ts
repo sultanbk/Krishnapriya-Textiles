@@ -29,7 +29,10 @@ export async function PATCH(
       await db.$transaction(async (tx) => {
         await tx.order.update({
           where: { id },
-          data: { status },
+          data: {
+            status,
+            cancelledAt: new Date(),
+          },
         });
 
         for (const item of orderItems) {
@@ -40,9 +43,13 @@ export async function PATCH(
         }
       });
     } else {
+      const extraData: Record<string, unknown> = {};
+      if (status === "SHIPPED") extraData.shippedAt = new Date();
+      if (status === "DELIVERED") extraData.deliveredAt = new Date();
+
       await db.order.update({
         where: { id },
-        data: { status },
+        data: { status, ...extraData },
       });
     }
 

@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { MapPin, CreditCard, Banknote, ArrowRight, ShoppingBag, Plus, Tag, Check, X } from "lucide-react";
 import Link from "next/link";
+import Script from "next/script";
 import { z } from "zod";
 import { checkoutSchema } from "@/validators/order";
 import { createOrderAction } from "@/actions/checkout";
@@ -152,6 +153,11 @@ export default function CheckoutPage() {
             },
             theme: { color: "#800020" },
           };
+          if (!(window as any).Razorpay) {
+            toast.error("Payment gateway is loading. Please try again in a moment.");
+            setLoading(false);
+            return;
+          }
           const razorpay = new (window as any).Razorpay(options);
           razorpay.open();
         } else {
@@ -195,7 +201,7 @@ export default function CheckoutPage() {
 
   return (
     <>
-      <script src="https://checkout.razorpay.com/v1/checkout.js" async />
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
 
       <div className="container mx-auto px-4 py-8">
         <h1 className="font-heading text-2xl font-bold sm:text-3xl">Checkout</h1>

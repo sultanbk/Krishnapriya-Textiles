@@ -2,18 +2,24 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { SessionUser } from "@/types";
 
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET environment variable is required in production");
+}
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "fallback-secret-change-in-production-32chars!"
 );
 
 const COOKIE_NAME = "kpt-session";
-const COOKIE_MAX_AGE = 30 * 24 * 60 * 60; // 30 days
+const SESSION_SHORT = 7 * 24 * 60 * 60;  // 7 days (default)
+const SESSION_LONG = 30 * 24 * 60 * 60;  // 30 days (remember me)
 
-export async function createToken(payload: SessionUser): Promise<string> {
+export async function createToken(payload: SessionUser, rememberMe = false): Promise<string> {
+  const expiry = rememberMe ? "30d" : "7d";
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("30d")
+    .setExpirationTime(expiry)
     .sign(JWT_SECRET);
 }
 
@@ -33,13 +39,13 @@ export async function getSession(): Promise<SessionUser | null> {
   return verifyToken(token);
 }
 
-export async function setSessionCookie(token: string): Promise<void> {
+export async function setSessionCookie(token: string, rememberMe = false): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: COOKIE_MAX_AGE,
+    maxAge: rememberMe ? SESSION_LONG : SESSION_SHORT,
     path: "/",
   });
 }

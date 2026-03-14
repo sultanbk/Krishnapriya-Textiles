@@ -61,8 +61,9 @@ export async function requestOtp(phone: string): Promise<{ success: boolean; mes
  */
 export async function verifyOtp(
   phone: string,
-  otp: string
-): Promise<{ success: boolean; token: string; user: SessionUser }> {
+  otp: string,
+  rememberMe = false
+): Promise<{ success: boolean; token: string; user: SessionUser; isNewUser: boolean }> {
   // Find the most recent unused OTP for this phone
   const otpRecord = await db.otp.findFirst({
     where: {
@@ -106,6 +107,9 @@ export async function verifyOtp(
     update: {},
   });
 
+  // Check if user is new (has no name set yet)
+  const isNewUser = !user.name;
+
   // Generate JWT
   const sessionUser: SessionUser = {
     userId: user.id,
@@ -113,10 +117,10 @@ export async function verifyOtp(
     role: user.role,
   };
 
-  const token = await createToken(sessionUser);
-  await setSessionCookie(token);
+  const token = await createToken(sessionUser, rememberMe);
+  await setSessionCookie(token, rememberMe);
 
-  return { success: true, token, user: sessionUser };
+  return { success: true, token, user: sessionUser, isNewUser };
 }
 
 /**

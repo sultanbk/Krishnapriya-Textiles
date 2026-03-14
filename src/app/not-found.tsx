@@ -7,7 +7,7 @@ export default function NotFound() {
       <div className="space-y-6">
         <div
           className="text-8xl font-bold text-primary/20 sm:text-9xl"
-          style={{ fontFamily: "var(--font-display)" }}
+          style={{ fontFamily: "var(--font-heading)" }}
         >
           404
         </div>

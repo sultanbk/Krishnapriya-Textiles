@@ -79,9 +79,10 @@ export async function createOrder(
   const shippingCharge = subtotal >= 1500 ? 0 : 99;
   const totalAmount = subtotal - discount + shippingCharge;
 
-  // Generate order number
+  // Generate order number with randomness to prevent race condition duplicates
   const orderCount = await db.order.count();
-  const orderNumber = generateOrderNumber(orderCount + 1);
+  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+  const orderNumber = `${generateOrderNumber(orderCount + 1)}-${randomSuffix}`;
 
   // Snapshot address
   const shippingAddress: ShippingAddress = {

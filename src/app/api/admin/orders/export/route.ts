@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import ExcelJS from "exceljs";
 
+import type { Prisma, OrderStatus } from "@prisma/client";
+
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
@@ -15,8 +17,8 @@ export async function GET(request: Request) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
-  const where: any = {};
-  if (status) where.status = status;
+  const where: Prisma.OrderWhereInput = {};
+  if (status) where.status = status as unknown as OrderStatus;
   if (from || to) {
     where.createdAt = {};
     if (from) where.createdAt.gte = new Date(from);
@@ -60,7 +62,6 @@ export async function GET(request: Request) {
     ];
 
     const rows = orders.map((order) => {
-      const address = order.shippingAddress as any;
       const items = order.items
         .map((i) => `${i.productName} x${i.quantity}`)
         .join("; ");
@@ -144,7 +145,7 @@ export async function GET(request: Request) {
   sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
 
   orders.forEach((order) => {
-    const address = order.shippingAddress as any;
+    const address = order.shippingAddress as Record<string, string> | null;
     const items = order.items
       .map((i) => `${i.productName} (${i.productSku}) x${i.quantity} @ ₹${i.price.toNumber()}`)
       .join("\n");
@@ -192,9 +193,9 @@ export async function GET(request: Request) {
     { metric: "Export Date", value: new Date().toLocaleDateString("en-IN") },
   ]);
 
-  const buffer = await workbook.xlsx.writeBuffer();
+  const excelBuffer = await workbook.xlsx.writeBuffer();
 
-  return new NextResponse(buffer as any, {
+  return new NextResponse(new Uint8Array(excelBuffer as unknown as ArrayBuffer), {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

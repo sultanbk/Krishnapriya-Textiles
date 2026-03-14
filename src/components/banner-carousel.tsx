@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Banner {
@@ -21,6 +21,7 @@ interface BannerCarouselProps {
 export function BannerCarousel({ banners }: BannerCarouselProps) {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const router = useRouter();
 
   const next = useCallback(() => {
     setCurrent((c) => (c + 1) % banners.length);
@@ -41,9 +42,19 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
 
   const banner = banners[current];
 
-  const content = (
+  return (
     <div
-      className="relative w-full overflow-hidden"
+      className={`relative w-full overflow-hidden${banner.link ? " cursor-pointer" : ""}`}
+      role={banner.link ? "link" : undefined}
+      tabIndex={banner.link ? 0 : undefined}
+      aria-label={banner.link ? `${banner.title} — Click to shop` : undefined}
+      onClick={() => banner.link && router.push(banner.link)}
+      onKeyDown={(e) => {
+        if (banner.link && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          router.push(banner.link);
+        }
+      }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -103,14 +114,14 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
       {banners.length > 1 && (
         <>
           <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); prev(); }}
+            onClick={(e) => { e.stopPropagation(); prev(); }}
             className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/50"
             aria-label="Previous banner"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); next(); }}
+            onClick={(e) => { e.stopPropagation(); next(); }}
             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/30 p-2 text-white backdrop-blur-sm transition-all hover:bg-black/50"
             aria-label="Next banner"
           >
@@ -122,7 +133,7 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
             {banners.map((_, i) => (
               <button
                 key={i}
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrent(i); }}
+                onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
                 className={`h-2 rounded-full transition-all ${
                   i === current
                     ? "w-6 bg-white"
@@ -136,15 +147,4 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
       )}
     </div>
   );
-
-  // Wrap in link if banner has a link
-  if (banner.link) {
-    return (
-      <Link href={banner.link} className="block">
-        {content}
-      </Link>
-    );
-  }
-
-  return content;
 }

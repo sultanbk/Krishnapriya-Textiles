@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { reviewSchema } from "@/validators/review";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   try {
@@ -56,6 +57,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Rate limit: 10 reviews per hour per user
+    const { limited } = rateLimit(`review:${session.userId}`, { limit: 10, windowSec: 3600 });
+    if (limited) {
+      return NextResponse.json(
+        { error: "Too many reviews. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const validated = reviewSchema.parse(body);
 
@@ -76,6 +86,7 @@ export async function POST(req: NextRequest) {
         data: {
           rating: validated.rating,
           comment: validated.comment || null,
+          photos: body.photos || existing.photos || [],
         },
         include: { user: { select: { name: true } } },
       });
@@ -100,6 +111,7 @@ export async function POST(req: NextRequest) {
         userId: session.userId,
         rating: validated.rating,
         comment: validated.comment || null,
+        photos: body.photos || [],
         isVisible: !!hasPurchased, // Auto-approve for verified buyers
       },
       include: { user: { select: { name: true } } },

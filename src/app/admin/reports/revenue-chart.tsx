@@ -73,8 +73,8 @@ export function RevenueChart({ monthlyData, weeklyData }: RevenueChartProps) {
                 className="fill-muted-foreground"
               />
               <Tooltip
-                formatter={(value: any) => [
-                  `₹${Number(value).toLocaleString("en-IN")}`,
+                formatter={(value) => [
+                  `₹${Number(value ?? 0).toLocaleString("en-IN")}`,
                   "Revenue",
                 ]}
                 contentStyle={{
@@ -116,7 +116,7 @@ export function RevenueChart({ monthlyData, weeklyData }: RevenueChartProps) {
                   className="fill-muted-foreground"
                 />
                 <Tooltip
-                  formatter={(value: any) => [value, "Orders"]}
+                  formatter={(value) => [String(value ?? 0), "Orders"]}
                   contentStyle={{
                     backgroundColor: "hsl(var(--popover))",
                     border: "1px solid hsl(var(--border))",

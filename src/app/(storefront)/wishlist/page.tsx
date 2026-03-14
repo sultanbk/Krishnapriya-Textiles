@@ -1,15 +1,43 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, ShoppingBag, Trash2, ArrowRight } from "lucide-react";
+import { Heart, ShoppingBag, Trash2 } from "lucide-react";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice, getDiscountPercentage } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function WishlistPage() {
   const { items, removeItem, clearAll } = useWishlistStore();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
+  if (!mounted) {
+    return (
+      <div className="container mx-auto px-4 py-8 sm:py-10">
+        <div className="mb-8">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="mt-2 h-5 w-32" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="space-y-3 animate-pulse">
+              <Skeleton className="aspect-[3/4] rounded-xl" />
+              <Skeleton className="h-3 w-2/3" />
+              <Skeleton className="h-4 w-4/5" />
+              <Skeleton className="h-4 w-1/3" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-10">

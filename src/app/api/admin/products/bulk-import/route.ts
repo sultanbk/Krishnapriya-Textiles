@@ -23,7 +23,8 @@ export async function POST(request: Request) {
 
     const buffer = await file.arrayBuffer();
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(Buffer.from(buffer) as any);
+    // @ts-expect-error — ExcelJS Buffer type mismatch with Node 22 Buffer
+    await workbook.xlsx.load(Buffer.from(buffer));
 
     const sheet = workbook.worksheets[0];
     if (!sheet) {
@@ -233,13 +234,13 @@ export async function POST(request: Request) {
           name,
           message: "Product created successfully",
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         errorCount++;
         results.push({
           row: rowNumber,
           status: "error",
           name,
-          message: err.message || "Unknown error",
+          message: err instanceof Error ? err.message : "Unknown error",
         });
       }
     }
@@ -250,9 +251,9 @@ export async function POST(request: Request) {
       errors: errorCount,
       results,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || "Failed to process file" },
+      { error: err instanceof Error ? err.message : "Failed to process file" },
       { status: 500 }
     );
   }
@@ -367,9 +368,9 @@ export async function GET() {
     { field: "Required Fields", values: "Name, SKU, Description, Price, Fabric, Occasion, Category, Color" },
   ]);
 
-  const buffer = await workbook.xlsx.writeBuffer();
+  const excelBuffer = await workbook.xlsx.writeBuffer();
 
-  return new NextResponse(buffer as any, {
+  return new NextResponse(new Uint8Array(excelBuffer as unknown as ArrayBuffer), {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

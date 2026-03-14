@@ -22,8 +22,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product: rawProduct }: ProductCardProps) {
-  // Coerce Prisma Decimal values to plain numbers so they can cross the
-  // Server → Client Component boundary (WishlistButton, QuickViewModal).
   const product = {
     ...rawProduct,
     price: Number(rawProduct.price),
@@ -37,53 +35,70 @@ export function ProductCard({ product: rawProduct }: ProductCardProps) {
 
   const outOfStock = (product.stock ?? 0) <= 0;
   const lowStock = !outOfStock && (product.stock ?? 0) <= 5;
+  const hasSecondImage = product.images.length > 1;
 
   return (
     <Link href={`/products/${product.slug}`} className="group block">
-      <div className={`overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-border/50 transition-all duration-300 hover:shadow-lg hover:ring-primary/20 ${outOfStock ? "opacity-75" : ""}`}>
+      <div className={`card-hover overflow-hidden rounded-2xl bg-card ring-1 ring-border/40 ${outOfStock ? "opacity-70 grayscale-[20%]" : ""}`}>
+        {/* Image Container */}
         <div className="relative aspect-[3/4] overflow-hidden bg-muted">
           {product.images[0] ? (
-            <Image
-              src={product.images[0].url}
-              alt={product.images[0].alt || product.name}
-              fill
-              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              placeholder={getBlurPlaceholder(product.images[0].url) ? "blur" : "empty"}
-              blurDataURL={getBlurPlaceholder(product.images[0].url) || undefined}
-            />
+            <>
+              <Image
+                src={product.images[0].url}
+                alt={product.images[0].alt || product.name}
+                fill
+                className={`object-cover transition-all duration-700 ease-out ${hasSecondImage ? "group-hover:opacity-0" : "group-hover:scale-105"}`}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                placeholder={getBlurPlaceholder(product.images[0].url) ? "blur" : "empty"}
+                blurDataURL={getBlurPlaceholder(product.images[0].url) || undefined}
+              />
+              {/* Second image on hover */}
+              {hasSecondImage && (
+                <Image
+                  src={product.images[1].url}
+                  alt={product.images[1].alt || product.name}
+                  fill
+                  className="object-cover opacity-0 transition-all duration-700 ease-out group-hover:opacity-100 group-hover:scale-105"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                />
+              )}
+            </>
           ) : (
             <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/10">
               <span className="text-4xl font-bold text-primary/10" style={{ fontFamily: "var(--font-heading)" }}>KPT</span>
             </div>
           )}
-          {/* Hover overlay */}
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+          {/* Bottom gradient overlay */}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/25 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
           {/* Badges */}
-          <div className="absolute left-2.5 top-2.5 flex flex-col gap-1.5">
+          <div className="absolute left-2 top-2 flex flex-col gap-1 sm:left-2.5 sm:top-2.5 sm:gap-1.5">
             {discount > 0 && (
-              <Badge variant="destructive" className="rounded-md px-2 py-0.5 text-[10px] font-bold shadow-sm">
+              <Badge variant="destructive" className="rounded-lg px-2 py-0.5 text-[10px] font-bold shadow-md">
                 {discount}% OFF
               </Badge>
             )}
             {(product.isNew || product.isNewArrival) && (
-              <Badge className="rounded-md bg-emerald-600 px-2 py-0.5 text-[10px] font-bold shadow-sm hover:bg-emerald-600">
+              <Badge className="rounded-lg bg-emerald-600 px-2 py-0.5 text-[10px] font-bold shadow-md hover:bg-emerald-600">
                 New
               </Badge>
             )}
             {outOfStock && (
-              <Badge variant="secondary" className="rounded-md bg-gray-800 text-white px-2 py-0.5 text-[10px] font-bold shadow-sm">
+              <Badge variant="secondary" className="rounded-lg bg-gray-900/90 text-white px-2 py-0.5 text-[10px] font-bold shadow-md backdrop-blur-sm">
                 Sold Out
               </Badge>
             )}
             {lowStock && (
-              <Badge className="rounded-md bg-amber-500 text-white px-2 py-0.5 text-[10px] font-bold shadow-sm hover:bg-amber-500">
+              <Badge className="rounded-lg bg-amber-500 text-white px-2 py-0.5 text-[10px] font-bold shadow-md hover:bg-amber-500">
                 Only {product.stock} left
               </Badge>
             )}
           </div>
+
           {/* Wishlist */}
-          <div className="absolute right-2.5 top-2.5 z-10 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100 [&:has(button[data-wishlisted=true])]:!opacity-100">
+          <div className="absolute right-2 top-2 z-10 sm:right-2.5 sm:top-2.5 sm:opacity-0 sm:transition-all sm:duration-300 sm:group-hover:opacity-100 [&:has(button[data-wishlisted=true])]:!opacity-100">
             <WishlistButton
               product={{
                 id: product.id,
@@ -96,8 +111,9 @@ export function ProductCard({ product: rawProduct }: ProductCardProps) {
               }}
             />
           </div>
+
           {/* Quick View */}
-          <div className="absolute inset-x-0 bottom-3 flex justify-center opacity-0 transition-all duration-300 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 z-10">
+          <div className="absolute inset-x-0 bottom-3 flex justify-center opacity-0 transition-all duration-300 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 z-10">
             <QuickViewModal
               product={{
                 id: product.id,
@@ -116,14 +132,22 @@ export function ProductCard({ product: rawProduct }: ProductCardProps) {
             </QuickViewModal>
           </div>
         </div>
-        <div className="p-3 sm:p-4">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            {product.fabric.toLowerCase().replace(/_/g, " ")}
-          </p>
-          <h3 className="mt-1.5 text-sm font-semibold leading-snug line-clamp-2 transition-colors group-hover:text-primary sm:text-base" style={{ fontFamily: "var(--font-heading)" }}>
+
+        {/* Product Info */}
+        <div className="space-y-1.5 p-3 sm:p-4">
+          {product.category ? (
+            <p className="text-[10px] font-medium uppercase tracking-wider text-secondary sm:text-[11px]">
+              {product.category.name}
+            </p>
+          ) : (
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:text-[11px]">
+              {product.fabric.toLowerCase().replace(/_/g, " ")}
+            </p>
+          )}
+          <h3 className="text-sm font-semibold leading-snug line-clamp-2 transition-colors group-hover:text-primary sm:text-base" style={{ fontFamily: "var(--font-heading)" }}>
             {product.name}
           </h3>
-          <div className="mt-2.5 flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 pt-0.5">
             <span className="text-base font-bold text-primary sm:text-lg">
               {formatPrice(product.price)}
             </span>

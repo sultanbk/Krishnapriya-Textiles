@@ -95,6 +95,9 @@ export function ContactForm() {
             id="phone"
             name="phone"
             required
+            pattern="[6-9][0-9]{9}"
+            maxLength={10}
+            title="Please enter a valid 10-digit Indian mobile number"
             className="w-full rounded-xl border bg-background px-4 py-3 text-sm transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             placeholder="10-digit mobile number"
           />

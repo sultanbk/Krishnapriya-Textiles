@@ -24,6 +24,8 @@ import { formatPrice, formatDate } from "@/lib/utils";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/constants";
 import { siteConfig } from "@/config/site";
 import { DownloadInvoiceButton } from "@/components/orders/download-invoice-button";
+import { CancelOrderButton } from "@/components/orders/cancel-order-button";
+import { ReturnRequestButton } from "@/components/orders/return-request-button";
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -103,6 +105,14 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         </div>
         <Badge className={`ml-auto ${statusColor}`}>{statusLabel}</Badge>
         <DownloadInvoiceButton orderId={order.id} orderNumber={order.orderNumber} />
+        <CancelOrderButton orderId={order.id} orderNumber={order.orderNumber} status={order.status} />
+        <ReturnRequestButton
+          orderId={order.id}
+          orderNumber={order.orderNumber}
+          status={order.status}
+          deliveredAt={order.deliveredAt?.toISOString() ?? null}
+          createdAt={order.createdAt.toISOString()}
+        />
       </div>
 
       {/* Order Status Timeline */}

@@ -8,12 +8,16 @@ import type { ProductFilters, PaginatedResult, ProductWithImages, ProductListIte
 export async function getProducts(
   filters: ProductFilters = {}
 ): Promise<PaginatedResult<ProductListItem>> {
-  const { category, fabric, occasion, minPrice, maxPrice, sort, search, page = 1 } = filters;
+  const { category, fabric, occasion, minPrice, maxPrice, sort, search, page = 1, inStock } = filters;
   const pageSize = ITEMS_PER_PAGE;
 
   const where: Prisma.ProductWhereInput = {
     isActive: true,
   };
+
+  if (inStock) {
+    where.stock = { gt: 0 };
+  }
 
   if (category) {
     where.category = { slug: category };
@@ -210,6 +214,18 @@ export async function getCategories() {
       _count: { select: { products: { where: { isActive: true } } } },
     },
   });
+}
+
+export async function getProductReviewStats(productId: string): Promise<{ total: number; averageRating: number }> {
+  const result = await db.review.aggregate({
+    where: { productId, isVisible: true },
+    _avg: { rating: true },
+    _count: { id: true },
+  });
+  return {
+    total: result._count.id,
+    averageRating: Math.round((result._avg.rating || 0) * 10) / 10,
+  };
 }
 
 export async function getRelatedProducts(productId: string, categoryId: string | null, limit = 4) {

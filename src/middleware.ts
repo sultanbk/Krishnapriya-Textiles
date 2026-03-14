@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET environment variable is required in production");
+}
+
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "fallback-secret-change-in-production-32chars!"
 );
@@ -14,6 +18,8 @@ const protectedRoutes = ["/account", "/orders", "/addresses", "/checkout", "/not
 const adminRoutes = ["/admin"];
 // Routes that should redirect to home if already logged in
 const authRoutes = ["/login", "/verify-otp"];
+// Routes that require authentication but are part of onboarding
+const onboardingRoutes = ["/complete-profile"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -36,6 +42,15 @@ export async function middleware(request: NextRequest) {
   // Check if accessing auth pages while logged in
   if (user && authRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // Check onboarding routes (require auth but not profile completion)
+  if (onboardingRoutes.some((route) => pathname.startsWith(route))) {
+    if (!user) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    // Allow access — user needs to complete profile
+    return NextResponse.next();
   }
 
   // Check protected routes
@@ -68,5 +83,6 @@ export const config = {
     "/admin/:path*",
     "/login",
     "/verify-otp",
+    "/complete-profile",
   ],
 };

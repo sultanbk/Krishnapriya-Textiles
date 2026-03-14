@@ -7,8 +7,10 @@ import { ProductCard } from "@/components/product/product-card";
 import { getProducts } from "@/actions/products";
 import type { ProductFilters } from "@/types";
 
+import type { ProductListItem } from "@/types";
+
 interface ProductGridWithLoadMoreProps {
-  initialProducts: any[];
+  initialProducts: ProductListItem[];
   initialHasMore: boolean;
   initialTotal: number;
   filters: ProductFilters;
@@ -40,8 +42,12 @@ export function ProductGridWithLoadMore({
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
-        {products.map((product: any) => (
-          <ProductCard key={product.id} product={product} />
+        {products.map((product) => (
+          <ProductCard key={product.id} product={{
+            ...product,
+            price: Number(product.price),
+            compareAtPrice: product.compareAtPrice != null ? Number(product.compareAtPrice) : null,
+          }} />
         ))}
       </div>
 

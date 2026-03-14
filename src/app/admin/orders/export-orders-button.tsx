@@ -16,7 +16,7 @@ interface ExportOrdersButtonProps {
   search?: string;
 }
 
-export function ExportOrdersButton({ status, search }: ExportOrdersButtonProps) {
+export function ExportOrdersButton({ status }: ExportOrdersButtonProps) {
   const [loading, setLoading] = useState(false);
 
   async function handleExport(format: "xlsx" | "csv") {

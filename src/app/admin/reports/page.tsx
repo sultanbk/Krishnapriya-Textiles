@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { formatPrice } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { IndianRupee, TrendingUp, ShoppingBag, Package } from "lucide-react";
+import { IndianRupee, TrendingUp, ShoppingBag } from "lucide-react";
 import { RevenueChart } from "./revenue-chart";
 import { TopSellingTable } from "./top-selling-table";
 
@@ -26,7 +26,6 @@ async function getReportData() {
   const monthlyRevenue: { month: string; revenue: number; orders: number }[] = [];
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const monthLabel = d.toLocaleString("en-IN", { month: "short", year: "2-digit" });
     const ordersInMonth = monthlyOrders.filter((o) => {
       const od = new Date(o.createdAt);
@@ -72,13 +71,6 @@ async function getReportData() {
   // Get revenue per product
   const topSellingWithRevenue = await Promise.all(
     topSelling.map(async (item) => {
-      const revenue = await db.orderItem.aggregate({
-        where: {
-          productId: item.productId,
-          order: { paymentStatus: "PAID" },
-        },
-        _sum: { quantity: true },
-      });
       const orderItems = await db.orderItem.findMany({
         where: {
           productId: item.productId,
@@ -154,16 +146,16 @@ export default async function AdminReportsPage() {
   const data = await getReportData();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <div>
-        <h1 className="font-heading text-2xl font-bold">Sales Reports</h1>
+        <h1 className="font-heading text-2xl font-bold tracking-tight">Sales Reports</h1>
         <p className="text-sm text-muted-foreground">
           Track your revenue, orders and best-selling sarees
         </p>
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">

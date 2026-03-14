@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from "@/lib/constants";
 import { OrderStatusUpdate } from "../order-status-update";
+import { OrderDetailsForm } from "../order-details-form";
 import { DownloadInvoiceButton } from "@/components/orders/download-invoice-button";
 
 interface AdminOrderDetailProps {
@@ -224,6 +225,15 @@ export default async function AdminOrderDetailPage({ params }: AdminOrderDetailP
               </CardContent>
             </Card>
           )}
+
+          {/* Tracking & Admin Notes */}
+          <OrderDetailsForm
+            orderId={order.id}
+            initialTrackingNumber={order.trackingNumber}
+            initialAdminNote={order.adminNote}
+            customerPhone={order.user?.phone || null}
+            orderNumber={order.orderNumber}
+          />
         </div>
       </div>
     </div>

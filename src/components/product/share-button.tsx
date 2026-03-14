@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Share2, Link as LinkIcon, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,12 +19,32 @@ interface ShareButtonProps {
 
 export function ShareButton({ url, title, description }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [supportsNativeShare, setSupportsNativeShare] = useState(false);
+
+  // Check for native share support on client
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && !!navigator.share) {
+      setSupportsNativeShare(true);
+    }
+  }, []);
 
   const fullUrl = typeof window !== "undefined"
     ? `${window.location.origin}${url}`
     : url;
 
   const shareText = `Check out ${title} on Krishnapriya Textiles`;
+
+  async function handleNativeShare() {
+    try {
+      await navigator.share({
+        title,
+        text: shareText,
+        url: fullUrl,
+      });
+    } catch {
+      // User cancelled share — ignore
+    }
+  }
 
   async function copyLink() {
     try {
@@ -59,13 +79,27 @@ export function ShareButton({ url, title, description }: ShareButtonProps) {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="h-9 w-9 rounded-lg shrink-0">
+    <>
+      {/* Mobile: native share button */}
+      {supportsNativeShare && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 rounded-lg shrink-0 lg:hidden"
+          onClick={handleNativeShare}
+        >
           <Share2 className="h-4 w-4" />
           <span className="sr-only">Share</span>
         </Button>
-      </DropdownMenuTrigger>
+      )}
+      {/* Desktop (or fallback): dropdown menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" className={`h-9 w-9 rounded-lg shrink-0 ${supportsNativeShare ? "hidden lg:inline-flex" : ""}`}>
+            <Share2 className="h-4 w-4" />
+            <span className="sr-only">Share</span>
+          </Button>
+        </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={shareWhatsApp} className="gap-2 cursor-pointer">
           <svg className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
@@ -94,6 +128,7 @@ export function ShareButton({ url, title, description }: ShareButtonProps) {
           {copied ? "Copied!" : "Copy Link"}
         </DropdownMenuItem>
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </>
   );
 }

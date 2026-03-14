@@ -18,5 +18,11 @@ export const verifyOtpSchema = z.object({
   otp: otpSchema,
 });
 
+export const completeProfileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
+  email: z.string().email("Enter a valid email address").optional(),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
+export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;

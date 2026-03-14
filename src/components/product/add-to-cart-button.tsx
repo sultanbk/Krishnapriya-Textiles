@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ShoppingBag, Minus, Plus, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ShoppingBag, Minus, Plus, Check, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart-store";
@@ -15,31 +16,40 @@ interface AddToCartButtonProps {
     stock: number;
     image?: string;
   };
+  showBuyNow?: boolean;
 }
 
-export function AddToCartButton({ product }: AddToCartButtonProps) {
+export function AddToCartButton({ product, showBuyNow = false }: AddToCartButtonProps) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.openCart);
+  const router = useRouter();
 
   const outOfStock = product.stock <= 0;
 
+  const cartItem = {
+    id: product.id,
+    productId: product.id,
+    name: product.name,
+    slug: product.slug,
+    price: product.price,
+    image: product.image || "",
+    quantity,
+    stock: product.stock,
+  };
+
   function handleAdd() {
-    addItem({
-      id: product.id,
-      productId: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      image: product.image || "",
-      quantity,
-      stock: product.stock,
-    });
+    addItem(cartItem);
     setAdded(true);
     toast.success(`${product.name} added to cart!`);
     openCart();
     setTimeout(() => setAdded(false), 2000);
+  }
+
+  function handleBuyNow() {
+    addItem(cartItem);
+    router.push("/checkout");
   }
 
   return (
@@ -75,25 +85,39 @@ export function AddToCartButton({ product }: AddToCartButtonProps) {
         )}
       </div>
 
-      {/* Add to cart button */}
-      <Button
-        className="w-full"
-        size="lg"
-        onClick={handleAdd}
-        disabled={outOfStock || added}
-      >
-        {outOfStock ? (
-          "Out of Stock"
-        ) : added ? (
-          <span className="flex items-center gap-2">
-            <Check className="h-4 w-4" /> Added to Cart
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            <ShoppingBag className="h-4 w-4" /> Add to Cart
-          </span>
+      {/* Add to cart + Buy Now buttons */}
+      <div className={showBuyNow ? "grid grid-cols-2 gap-2.5" : "flex"}>
+        <Button
+          className={showBuyNow ? "" : "w-full"}
+          size="lg"
+          onClick={handleAdd}
+          disabled={outOfStock || added}
+        >
+          {outOfStock ? (
+            "Out of Stock"
+          ) : added ? (
+            <span className="flex items-center gap-2">
+              <Check className="h-4 w-4" /> Added
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              <ShoppingBag className="h-4 w-4" /> Add to Cart
+            </span>
+          )}
+        </Button>
+
+        {showBuyNow && !outOfStock && (
+          <Button
+            size="lg"
+            variant="secondary"
+            className="font-semibold bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            onClick={handleBuyNow}
+          >
+            <Zap className="mr-2 h-4 w-4" />
+            Buy Now
+          </Button>
         )}
-      </Button>
+      </div>
     </div>
   );
 }

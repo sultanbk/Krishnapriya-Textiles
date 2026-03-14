@@ -8,7 +8,6 @@ import {
   View,
   StyleSheet,
   pdf,
-  Font,
 } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";

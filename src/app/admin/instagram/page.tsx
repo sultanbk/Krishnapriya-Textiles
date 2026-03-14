@@ -135,9 +135,9 @@ export default function AdminInstagramPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold">Instagram Videos</h1>
+        <h1 className="font-heading text-2xl font-bold tracking-tight">Instagram Videos</h1>
         <p className="text-sm text-muted-foreground">
           Add Instagram reel/post links to display on the homepage. Just paste the URL!
         </p>

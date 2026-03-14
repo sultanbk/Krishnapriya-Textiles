@@ -1,260 +1,336 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { formatPrice } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/lib/utils";
 import {
-  ShoppingBag,
   Package,
+  ShoppingCart,
   Users,
   IndianRupee,
-  TrendingUp,
-  AlertTriangle,
+  AlertCircle,
+  Star,
+  MessageSquare,
   Plus,
-  Eye,
-  Image,
-  Ticket,
+  BarChart3,
+  TrendingUp,
+  Clock,
+  ChevronRight,
+  ArrowUpRight,
 } from "lucide-react";
 
+const STATUS_STYLE: Record<string, string> = {
+  PENDING: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  CONFIRMED: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",
+  PROCESSING: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400",
+  PACKED: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400",
+  SHIPPED: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-400",
+  DELIVERED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+  REFUNDED: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+};
+
 async function getDashboardStats() {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
   const [
-    totalOrders,
-    totalRevenue,
-    totalCustomers,
     totalProducts,
+    totalOrders,
+    totalCustomers,
+    revenueResult,
     pendingOrders,
     lowStockProducts,
+    pendingReviews,
+    unreadMessages,
+    todayOrders,
+    todayRevenue,
     recentOrders,
+    newCustomersToday,
   ] = await Promise.all([
+    db.product.count(),
     db.order.count(),
+    db.user.count({ where: { role: "USER" } }),
     db.order.aggregate({
       _sum: { totalAmount: true },
-      where: { paymentStatus: "PAID" },
+      where: { status: { in: ["DELIVERED", "SHIPPED", "PROCESSING", "CONFIRMED", "PACKED"] } },
     }),
-    db.user.count({ where: { role: "USER" } }),
-    db.product.count({ where: { isActive: true } }),
     db.order.count({ where: { status: "PENDING" } }),
     db.product.count({ where: { stock: { lte: 5 }, isActive: true } }),
-    db.order.findMany({
-      take: 10,
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: { select: { name: true, phone: true } },
-        _count: { select: { items: true } },
-      },
+    db.review.count({ where: { isVisible: false } }),
+    db.contactMessage.count({ where: { isRead: false } }),
+    db.order.count({ where: { createdAt: { gte: todayStart } } }),
+    db.order.aggregate({
+      _sum: { totalAmount: true },
+      where: { createdAt: { gte: todayStart } },
     }),
+    db.order.findMany({
+      take: 8,
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { name: true, phone: true } }, items: { select: { id: true } } },
+    }),
+    db.user.count({ where: { role: "USER", createdAt: { gte: todayStart } } }),
   ]);
 
   return {
-    totalOrders,
-    totalRevenue: totalRevenue._sum.totalAmount?.toNumber() || 0,
-    totalCustomers,
     totalProducts,
+    totalOrders,
+    totalCustomers,
+    totalRevenue: Number(revenueResult._sum.totalAmount ?? 0),
     pendingOrders,
     lowStockProducts,
+    pendingReviews,
+    unreadMessages,
+    todayOrders,
+    todayRevenue: Number(todayRevenue._sum.totalAmount ?? 0),
     recentOrders,
+    newCustomersToday,
   };
 }
 
 export default async function AdminDashboard() {
   const stats = await getDashboardStats();
 
-  const statCards = [
+  const mainStats = [
     {
-      title: "Total Earnings",
+      label: "Total Revenue",
       value: formatPrice(stats.totalRevenue),
       icon: IndianRupee,
-      description: "From all paid orders",
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-100 dark:bg-emerald-900/40",
+      href: "/admin/reports",
     },
     {
-      title: "Total Orders",
-      value: stats.totalOrders.toString(),
-      icon: ShoppingBag,
-      description: stats.pendingOrders > 0
-        ? `⚠️ ${stats.pendingOrders} new orders to check`
-        : "All orders processed ✅",
+      label: "Total Orders",
+      value: stats.totalOrders.toLocaleString("en-IN"),
+      icon: ShoppingCart,
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-100 dark:bg-blue-900/40",
+      href: "/admin/orders",
     },
     {
-      title: "Customers",
-      value: stats.totalCustomers.toString(),
-      icon: Users,
-      description: "People who signed up",
-    },
-    {
-      title: "Products Listed",
-      value: stats.totalProducts.toString(),
+      label: "Products",
+      value: stats.totalProducts.toLocaleString("en-IN"),
       icon: Package,
-      description: stats.lowStockProducts > 0
-        ? `⚠️ ${stats.lowStockProducts} running out of stock`
-        : "All products in stock ✅",
+      color: "text-violet-600 dark:text-violet-400",
+      bg: "bg-violet-100 dark:bg-violet-900/40",
+      href: "/admin/products",
+    },
+    {
+      label: "Customers",
+      value: stats.totalCustomers.toLocaleString("en-IN"),
+      icon: Users,
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-100 dark:bg-amber-900/40",
+      href: "/admin/customers",
     },
   ];
 
+  const alerts = [
+    stats.pendingOrders > 0 && {
+      label: `${stats.pendingOrders} pending order${stats.pendingOrders > 1 ? "s" : ""}`,
+      href: "/admin/orders?status=PENDING",
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800",
+    },
+    stats.lowStockProducts > 0 && {
+      label: `${stats.lowStockProducts} low-stock product${stats.lowStockProducts > 1 ? "s" : ""}`,
+      href: "/admin/inventory",
+      color: "text-red-600 dark:text-red-400",
+      bg: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800",
+    },
+    stats.pendingReviews > 0 && {
+      label: `${stats.pendingReviews} review${stats.pendingReviews > 1 ? "s" : ""} awaiting moderation`,
+      href: "/admin/reviews",
+      color: "text-indigo-600 dark:text-indigo-400",
+      bg: "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800",
+    },
+    stats.unreadMessages > 0 && {
+      label: `${stats.unreadMessages} unread message${stats.unreadMessages > 1 ? "s" : ""}`,
+      href: "/admin/messages",
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800",
+    },
+  ].filter(Boolean) as { label: string; href: string; color: string; bg: string }[];
+
+  const quickActions = [
+    { label: "Add Product", href: "/admin/products/new", icon: Plus },
+    { label: "View Orders", href: "/admin/orders", icon: ShoppingCart },
+    { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+    { label: "Reviews", href: "/admin/reviews", icon: Star },
+    { label: "Messages", href: "/admin/messages", icon: MessageSquare },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl font-bold">🙏 Welcome Back!</h1>
-        <p className="text-muted-foreground">Here&apos;s what&apos;s happening in your store today</p>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Overview of your store performance
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/reports">
+              <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
+              Reports
+            </Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/admin/products/new">
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Add Product
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-        <Button asChild variant="outline" className="h-auto flex-col gap-2 py-4">
-          <Link href="/admin/products/new">
-            <Plus className="h-5 w-5 text-primary" />
-            <span className="text-xs font-medium">Add New Saree</span>
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="h-auto flex-col gap-2 py-4">
-          <Link href="/admin/orders">
-            <Eye className="h-5 w-5 text-primary" />
-            <span className="text-xs font-medium">View Orders</span>
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="h-auto flex-col gap-2 py-4">
-          <Link href="/admin/banners">
-            <Image className="h-5 w-5 text-primary" />
-            <span className="text-xs font-medium">Change Banners</span>
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="h-auto flex-col gap-2 py-4">
-          <Link href="/admin/coupons/new">
-            <Ticket className="h-5 w-5 text-primary" />
-            <span className="text-xs font-medium">Create Coupon</span>
-          </Link>
-        </Button>
+      {/* Today&apos;s Highlight Strip */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+        <Card className="flex items-center gap-4 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <ShoppingCart className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-muted-foreground">Today&apos;s Orders</p>
+            <p className="text-xl font-bold tabular-nums">{stats.todayOrders}</p>
+          </div>
+        </Card>
+        <Card className="flex items-center gap-4 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-emerald-50 dark:from-emerald-950/30 to-transparent p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/40">
+            <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-muted-foreground">Today&apos;s Revenue</p>
+            <p className="text-xl font-bold tabular-nums">{formatPrice(stats.todayRevenue)}</p>
+          </div>
+        </Card>
+        <Card className="flex items-center gap-4 border-blue-200 dark:border-blue-800 bg-gradient-to-br from-blue-50 dark:from-blue-950/30 to-transparent p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/40">
+            <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <p className="text-xs font-medium text-muted-foreground">New Customers</p>
+            <p className="text-xl font-bold tabular-nums">{stats.newCustomersToday}</p>
+          </div>
+        </Card>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <Card key={stat.title} className="transition-shadow hover:shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/8">
-                <stat.icon className="h-4 w-4 text-primary" />
+      {/* Main Stats */}
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+        {mainStats.map((stat) => (
+          <Link key={stat.label} href={stat.href}>
+            <Card className="group relative overflow-hidden p-4 transition-all hover:shadow-md">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">{stat.label}</p>
+                  <p className="text-2xl font-bold tabular-nums">{stat.value}</p>
+                </div>
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${stat.bg}`}>
+                  <stat.icon className={`h-4.5 w-4.5 ${stat.color}`} />
+                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
+              <ArrowUpRight className="absolute bottom-2 right-2 h-3.5 w-3.5 text-muted-foreground/0 transition-all group-hover:text-muted-foreground/50" />
+            </Card>
+          </Link>
         ))}
       </div>
 
-      {/* Alerts - needs attention */}
-      {(stats.pendingOrders > 0 || stats.lowStockProducts > 0) && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {stats.pendingOrders > 0 && (
-            <Link href="/admin/orders?status=PENDING">
-              <Card className="border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-900/20 hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="flex items-center gap-4 p-4">
-                  <AlertTriangle className="h-8 w-8 text-yellow-600" />
-                  <div>
-                    <p className="font-semibold">New Orders Waiting!</p>
-                    <p className="text-sm text-muted-foreground">
-                      {stats.pendingOrders} orders — Click here to view and confirm them
-                    </p>
-                  </div>
-                </CardContent>
+      {/* Alerts */}
+      {alerts.length > 0 && (
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {alerts.map((alert) => (
+            <Link key={alert.href} href={alert.href}>
+              <Card className={`group flex items-center gap-3 border p-3 transition-all hover:shadow-sm ${alert.bg}`}>
+                <AlertCircle className={`h-4 w-4 shrink-0 ${alert.color}`} />
+                <span className={`flex-1 text-[13px] font-medium ${alert.color}`}>
+                  {alert.label}
+                </span>
+                <ChevronRight className={`h-4 w-4 shrink-0 ${alert.color} opacity-0 transition-all group-hover:opacity-100 group-hover:translate-x-0.5`} />
               </Card>
             </Link>
-          )}
-          {stats.lowStockProducts > 0 && (
-            <Link href="/admin/inventory">
-              <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20 hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="flex items-center gap-4 p-4">
-                  <AlertTriangle className="h-8 w-8 text-red-600" />
-                  <div>
-                    <p className="font-semibold">Stock Running Low!</p>
-                    <p className="text-sm text-muted-foreground">
-                      {stats.lowStockProducts} sarees have very less stock — Click to update
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          )}
+          ))}
         </div>
       )}
 
-      {/* Recent orders */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="font-heading text-lg">Recent Orders</CardTitle>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/orders">View All Orders</Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Orders */}
+        <Card className="lg:col-span-2 overflow-hidden">
+          <div className="flex items-center justify-between border-b px-5 py-3.5">
+            <h2 className="font-heading text-sm font-semibold">Recent Orders</h2>
+            <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
+              <Link href="/admin/orders">View all</Link>
+            </Button>
+          </div>
           {stats.recentOrders.length === 0 ? (
-            <div className="py-8 text-center">
-              <ShoppingBag className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm text-muted-foreground">No orders yet</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Orders will appear here when customers place them
-              </p>
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <ShoppingCart className="mb-2 h-8 w-8 opacity-40" />
+              <p className="text-sm">No orders yet</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="pb-2 text-left font-medium text-muted-foreground">
-                      Order #
-                    </th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">
-                      Customer
-                    </th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">
-                      Items
-                    </th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">
-                      Amount
-                    </th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.recentOrders.map((order) => (
-                    <tr key={order.id} className="border-b last:border-0 hover:bg-muted/50 cursor-pointer">
-                      <td className="py-3">
-                        <Link href={`/admin/orders/${order.id}`} className="font-mono text-xs text-primary hover:underline">
-                          {order.orderNumber}
-                        </Link>
-                      </td>
-                      <td className="py-3">
-                        {order.user?.name || order.user?.phone || "Unknown"}
-                      </td>
-                      <td className="py-3">{order._count.items}</td>
-                      <td className="py-3 font-semibold">
-                        {formatPrice(order.totalAmount.toNumber())}
-                      </td>
-                      <td className="py-3">
-                        <span className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          order.status === "DELIVERED" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" :
-                          order.status === "SHIPPED" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                          order.status === "CONFIRMED" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" :
-                          order.status === "CANCELLED" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
-                          order.status === "PENDING" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                          "bg-muted text-muted-foreground"
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="divide-y">
+              {stats.recentOrders.map((order) => (
+                <Link
+                  key={order.id}
+                  href={`/admin/orders/${order.id}`}
+                  className="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-xs font-bold text-muted-foreground">
+                    {order.items.length}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {order.user.name || order.user.phone}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="font-mono">{order.orderNumber}</span>
+                      <span>·</span>
+                      <Clock className="h-3 w-3" />
+                      <span>{new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold tabular-nums">
+                      {formatPrice(Number(order.totalAmount))}
+                    </p>
+                    <Badge
+                      variant="secondary"
+                      className={`mt-0.5 border-0 text-[10px] font-medium ${STATUS_STYLE[order.status] ?? ""}`}
+                    >
+                      {order.status}
+                    </Badge>
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card className="overflow-hidden">
+          <div className="border-b px-5 py-3.5">
+            <h2 className="font-heading text-sm font-semibold">Quick Actions</h2>
+          </div>
+          <div className="grid gap-1.5 p-3">
+            {quickActions.map((action) => (
+              <Button
+                key={action.label}
+                variant="ghost"
+                className="justify-start gap-3 h-10 px-3 text-[13px] font-medium"
+                asChild
+              >
+                <Link href={action.href}>
+                  <action.icon className="h-4 w-4 text-muted-foreground" />
+                  {action.label}
+                </Link>
+              </Button>
+            ))}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }

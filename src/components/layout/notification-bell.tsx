@@ -17,25 +17,26 @@ import {
 } from "@/actions/notifications";
 import { cn } from "@/lib/utils";
 
-export function NotificationBell() {
+export function NotificationBell({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Fetch notifications on open
+  // Fetch notifications on open (only if logged in)
   useEffect(() => {
-    if (open) {
+    if (open && isLoggedIn) {
       startTransition(async () => {
         const result = await getUserNotifications(1, 10);
         setNotifications(result.items);
         setUnreadCount(result.unreadCount);
       });
     }
-  }, [open]);
+  }, [open, isLoggedIn]);
 
-  // Periodic unread count check
+  // Periodic unread count check — only for authenticated users
   useEffect(() => {
+    if (!isLoggedIn) return;
     let mounted = true;
     const fetchCount = async () => {
       try {
@@ -49,7 +50,7 @@ export function NotificationBell() {
       mounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [isLoggedIn]);
 
   const handleMarkRead = async (id: string) => {
     await markNotificationRead(id);

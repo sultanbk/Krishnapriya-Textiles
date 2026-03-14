@@ -7,7 +7,31 @@ export function PWARegister() {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
 
-    // Register service worker after page load
+    // Only register service worker in production.
+    // In development the SW caches pages and keeps the site
+    // "alive" even after the dev server is stopped, which is
+    // confusing during local development.
+    const isDev =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+
+    if (isDev) {
+      // Unregister any existing SW so dev mode is always fresh
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const reg of registrations) {
+          reg.unregister();
+        }
+      });
+      // Clear all PWA caches in dev
+      if ("caches" in window) {
+        caches.keys().then((keys) => {
+          keys.forEach((k) => caches.delete(k));
+        });
+      }
+      return;
+    }
+
+    // Production: register service worker after page load
     window.addEventListener("load", () => {
       navigator.serviceWorker
         .register("/sw.js")

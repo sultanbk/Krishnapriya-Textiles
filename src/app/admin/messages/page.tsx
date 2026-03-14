@@ -17,10 +17,10 @@ export default async function MessagesPage() {
   const unreadCount = messages.filter((m) => !m.isRead).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-bold">📩 Customer Messages</h1>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Customer Messages</h1>
           <p className="text-sm text-muted-foreground">
             Messages from the &quot;Contact Us&quot; page on your website
           </p>

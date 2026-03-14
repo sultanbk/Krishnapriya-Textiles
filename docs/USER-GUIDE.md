@@ -43,6 +43,7 @@ Krishnapriya Textiles uses **phone number login** — no password needed!
 ### Browsing Without Login
 
 You can browse all products, view details, add to cart, and use the wishlist **without logging in**. You only need to log in when:
+
 - Proceeding to checkout
 - Viewing your order history
 - Writing a review
@@ -56,15 +57,15 @@ You can browse all products, view details, add to cart, and use the wishlist **w
 
 The homepage showcases products in curated sections:
 
-| Section | What you'll find |
-|---------|-----------------|
-| **Hero Banner** | Current sales and promotions (swipe/auto-rotate) |
-| **Featured Products** | Hand-picked premium sarees |
-| **New Arrivals** | Latest additions to the collection |
-| **Budget Picks** | Sarees under ₹999 |
-| **Shop by Category** | Quick links to Mysore Silk, Kanchipuram, Cotton, etc. |
-| **Customer Reviews** | What other customers are saying |
-| **Instagram** | Latest styling videos and reels |
+| Section               | What you'll find                                              |
+| --------------------- | ------------------------------------------------------------- |
+| **Hero Banner**       | Current sales and promotions (swipe/auto-rotate)              |
+| **Featured Products** | Hand-picked premium sarees                                    |
+| **New Arrivals**      | Latest additions to the collection                            |
+| **Budget Picks**      | Sarees under ₹999                                            |
+| **Shop by Category**  | Quick links to Mysore Silk, Kanchipuram, Cotton, etc.         |
+| **Customer Reviews**  | What other customers are saying                               |
+| **Instagram**         | Latest styling videos and reels                               |
 
 ### Category Pages
 
@@ -82,7 +83,7 @@ Navigate to **"Shop"** or **"All Products"** to see the full catalog with filter
 
 Click any product to view its full details:
 
-### What you'll see:
+### What you'll see
 
 - **Image Gallery** — Multiple product photos. Click thumbnails to switch. Zoom on hover
 - **Price** — Current price, original price (with discount percentage if on sale)
@@ -116,16 +117,17 @@ Click any product to view its full details:
 
 ### Filters (on Product Listing page)
 
-| Filter | How to use |
-|--------|-----------|
-| **Fabric** | Select one or more fabrics (Silk, Cotton, Banarasi, etc.) — multi-select |
-| **Occasion** | Select occasions (Wedding, Festive, Daily, etc.) — multi-select |
-| **Price Range** | Drag the slider to set min and max price |
-| **Category** | Select a specific category |
+| Filter          | How to use                                                                |
+| --------------- | ------------------------------------------------------------------------- |
+| **Fabric**      | Select one or more fabrics (Silk, Cotton, Banarasi, etc.) — multi-select  |
+| **Occasion**    | Select occasions (Wedding, Festive, Daily, etc.) — multi-select           |
+| **Price Range** | Drag the slider to set min and max price                                  |
+| **Category**    | Select a specific category                                                |
 
 ### Sorting
 
 Click the **"Sort by"** dropdown to arrange products by:
+
 - **Newest First** (default)
 - **Price: Low to High**
 - **Price: High to Low**
@@ -171,6 +173,7 @@ Save sarees you love for later!
 ### Cart Drawer
 
 The cart drawer appears on the right side when you add an item or click the cart icon:
+
 - **Item list** — Product image, name, price, quantity
 - **Quantity controls** — Use +/- to adjust
 - **Remove** — Click the trash icon to remove an item
@@ -182,16 +185,17 @@ The cart drawer appears on the right side when you add an item or click the cart
 ### Cart Page (`/cart`)
 
 A full-page view of your cart with the same features plus:
+
 - Detailed price breakdown
 - Continue Shopping link
 - Proceed to Checkout button
 
 ### Shipping
 
-| Cart Value | Shipping Charge |
-|-----------|----------------|
-| Below ₹1,500 | ₹99 |
-| ₹1,500 and above | **FREE** 🎉 |
+| Cart Value        | Shipping Charge |
+| ----------------- | --------------- |
+| Below ₹1,500     | ₹99             |
+| ₹1,500 and above | **FREE** 🎉     |
 
 ---
 
@@ -199,7 +203,7 @@ A full-page view of your cart with the same features plus:
 
 **Route:** `/checkout` (login required)
 
-### Step-by-Step Checkout:
+### Step-by-Step Checkout
 
 #### Step 1: Select Delivery Address
 
@@ -222,16 +226,18 @@ A full-page view of your cart with the same features plus:
 4. If invalid, you'll see an error message explaining why
 
 **Sample coupons (from seed data):**
-| Code | Discount |
-|------|---------|
-| `WELCOME10` | 10% off (max ₹200), min order ₹500 |
-| `FLAT200` | Flat ₹200 off, min order ₹1,000 |
-| `SILK15` | 15% off (max ₹400), min order ₹800 |
+
+| Code         | Discount                              |
+| ------------ | ------------------------------------- |
+| `WELCOME10`  | 10% off (max ₹200), min order ₹500   |
+| `FLAT200`    | Flat ₹200 off, min order ₹1,000      |
+| `SILK15`     | 15% off (max ₹400), min order ₹800   |
 | `FESTIVAL20` | 20% off (max ₹600), min order ₹1,000 |
 
 #### Step 3: Choose Payment Method
 
 **Option A — Prepaid (Online Payment):**
+
 1. Select **"Pay Online"**
 2. Click **"Place Order"**
 3. Razorpay payment modal opens
@@ -240,6 +246,7 @@ A full-page view of your cart with the same features plus:
 6. You're redirected to the order confirmation page
 
 **Option B — Cash on Delivery (COD):**
+
 1. Select **"Cash on Delivery"**
 2. Click **"Place Order"**
 3. Your order is placed immediately (payment collected on delivery)
@@ -250,6 +257,7 @@ A full-page view of your cart with the same features plus:
 #### Order Summary
 
 Before placing the order, review:
+
 - Items with quantities and prices
 - Subtotal
 - Shipping charge (or "Free")
@@ -259,6 +267,7 @@ Before placing the order, review:
 ### Order Confirmation
 
 After successful order placement:
+
 - You see a confirmation page with your **order number** (e.g., `KPT-20260225-A1B2C`)
 - WhatsApp button to message the store about your order
 - Link to view order details
@@ -272,6 +281,7 @@ After successful order placement:
 **Route:** `/orders` (login required)
 
 View all your past and current orders:
+
 - Order number
 - Date placed
 - Total amount
@@ -283,28 +293,28 @@ View all your past and current orders:
 
 Click any order to see full details:
 
-| Section | Details |
-|---------|---------|
-| **Status** | Current order status with visual timeline |
-| **Items** | Product images, names, quantities, prices |
-| **Shipping Address** | Delivery address |
-| **Payment** | Method, status, transaction ID |
-| **Tracking** | Courier tracking number (when shipped) |
-| **Invoice** | Download PDF invoice button |
-| **Support** | WhatsApp link to ask about this order |
+| Section              | Details                                   |
+| -------------------- | ----------------------------------------- |
+| **Status**           | Current order status with visual timeline |
+| **Items**            | Product images, names, quantities, prices |
+| **Shipping Address** | Delivery address                          |
+| **Payment**          | Method, status, transaction ID            |
+| **Tracking**         | Courier tracking number (when shipped)    |
+| **Invoice**          | Download PDF invoice button               |
+| **Support**          | WhatsApp link to ask about this order     |
 
 ### Understanding Order Statuses
 
-| Status | What it means | What to expect |
-|--------|--------------|----------------|
-| 🟡 **Pending** | Order received, awaiting confirmation | Store will review soon |
-| 🔵 **Confirmed** | Order accepted by the store | Preparation will begin |
-| 🟠 **Processing** | Order being prepared/packed | Almost ready to ship |
-| 📦 **Packed** | Order packed and ready | Will be shipped soon |
-| 🚚 **Shipped** | Handed to delivery partner | Check tracking number |
-| ✅ **Delivered** | Successfully delivered to you | Enjoy your saree! |
-| ❌ **Cancelled** | Order was cancelled | Refund if prepaid |
-| 💰 **Refunded** | Payment has been refunded | Check your account |
+| Status            | What it means                     | What to expect           |
+| ----------------- | --------------------------------- | ------------------------ |
+| 🟡 **Pending**    | Order received, awaiting confirm  | Store will review soon   |
+| 🔵 **Confirmed**  | Order accepted by the store       | Preparation will begin   |
+| 🟠 **Processing** | Order being prepared/packed       | Almost ready to ship     |
+| 📦 **Packed**     | Order packed and ready            | Will be shipped soon     |
+| 🚚 **Shipped**    | Handed to delivery partner        | Check tracking number    |
+| ✅ **Delivered**   | Successfully delivered to you     | Enjoy your saree!        |
+| ❌ **Cancelled**   | Order was cancelled               | Refund if prepaid        |
+| 💰 **Refunded**   | Payment has been refunded         | Check your account       |
 
 ---
 
@@ -315,11 +325,13 @@ Click any order to see full details:
 **Route:** `/account` (login required)
 
 View your account details:
+
 - Name
 - Phone number
 - Email (if provided)
 
 Quick links to:
+
 - My Orders
 - My Addresses
 - Wishlist
@@ -381,12 +393,12 @@ Quick links to:
 
 ### Notification Types
 
-| Type | When you receive it |
-|------|-------------------|
-| Order Confirmed | When your order is confirmed by the store |
-| Order Shipped | When your order is shipped (includes tracking info) |
-| Order Delivered | When your order is marked as delivered |
-| Order Cancelled | If your order is cancelled |
+| Type             | When you receive it                                 |
+| ---------------- | --------------------------------------------------- |
+| Order Confirmed  | When your order is confirmed by the store           |
+| Order Shipped    | When your order is shipped (includes tracking info) |
+| Order Delivered  | When your order is marked as delivered              |
+| Order Cancelled  | If your order is cancelled                          |
 
 ### Managing Notifications
 
@@ -456,12 +468,12 @@ Quick links to:
 
 ### Direct Contact
 
-| Method | Details |
-|--------|---------|
-| **Phone** | +91 91084 55006 |
-| **WhatsApp** | 9108455006 |
-| **Email** | info@krishnapriyatextiles.com |
-| **Visit** | Shidling Complex, Opposite Bus Stand, Hubli Road, Shirahatti 582120 |
+| Method       | Details                                                                 |
+| ------------ | ----------------------------------------------------------------------- |
+| **Phone**    | +91 91084 55006                                                         |
+| **WhatsApp** | 9108455006                                                              |
+| **Email**    | <info@krishnapriyatextiles.com>                                         |
+| **Visit**    | Shidling Complex, Opposite Bus Stand, Hubli Road, Shirahatti 582120     |
 
 ### Google Maps
 
@@ -475,13 +487,13 @@ The contact page includes an **embedded Google Map** showing the store location.
 
 A helpful guide for saree enthusiasts:
 
-| Section | What you'll learn |
-|---------|------------------|
-| **Fabric Guide** | Characteristics of all 12 fabric types (Silk, Cotton, Banarasi, etc.) |
-| **Occasion Guide** | Which saree suits weddings, festivals, daily wear, parties, etc. |
-| **Size Guide** | Understanding saree length and width measurements |
-| **Draping Tips** | Different styles of draping sarees |
-| **Care Instructions** | How to wash, store, and maintain your sarees |
+| Section               | What you'll learn                                                      |
+| --------------------- | ---------------------------------------------------------------------- |
+| **Fabric Guide**      | Characteristics of all 12 fabric types (Silk, Cotton, Banarasi, etc.)  |
+| **Occasion Guide**    | Which saree suits weddings, festivals, daily wear, parties, etc.       |
+| **Size Guide**        | Understanding saree length and width measurements                      |
+| **Draping Tips**      | Different styles of draping sarees                                     |
+| **Care Instructions** | How to wash, store, and maintain your sarees                           |
 
 ---
 

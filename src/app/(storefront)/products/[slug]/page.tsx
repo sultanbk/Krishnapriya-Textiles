@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, Truck, Shield, RotateCcw, MessageCircle } from "lucide-react";
+import { ChevronRight, Truck, Shield, RotateCcw, MessageCircle, Star } from "lucide-react";
 import { getProductBySlug, getRelatedProducts } from "@/actions/products";
 import { ImageGallery } from "@/components/product/image-gallery";
 import { AddToCartButton } from "@/components/product/add-to-cart-button";
@@ -25,6 +25,8 @@ import { Button } from "@/components/ui/button";
 import { ProductJsonLd, BreadcrumbJsonLd, FAQJsonLd } from "@/components/seo/json-ld";
 import { RecentlyViewed } from "@/components/product/recently-viewed";
 import { TrackProductView } from "@/components/product/track-product-view";
+import { StickyAddToCart } from "@/components/product/sticky-add-to-cart";
+import { PincodeChecker } from "@/components/product/pincode-checker";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -46,6 +48,9 @@ export async function generateMetadata({
       product.shortDescription ||
       product.description?.slice(0, 160) ||
       `Buy ${product.name} online at Krishnapriya Textiles`,
+    alternates: {
+      canonical: `/products/${product.slug}`,
+    },
     openGraph: {
       title: product.metaTitle || product.name,
       description:
@@ -54,6 +59,13 @@ export async function generateMetadata({
         product.description?.slice(0, 160) ||
         "",
       images: product.images[0] ? [{ url: product.images[0].url }] : [],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.metaTitle || product.name,
+      description: product.shortDescription || product.description?.slice(0, 160) || "",
+      images: product.images[0] ? [product.images[0].url] : [],
     },
   };
 }
@@ -71,6 +83,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ? getDiscountPercentage(Number(product.compareAtPrice), Number(product.price))
     : 0;
   const deliveryEstimate = getDeliveryEstimate();
+
+  // Inline rating stats from the first batch of reviews
+  const avgRating =
+    product.reviews.length > 0
+      ? product.reviews.reduce((sum: number, r: { rating: number }) => sum + r.rating, 0) /
+        product.reviews.length
+      : null;
+  const reviewCount = product.reviews.length;
+
+  // Deterministic social proof viewer count (changes every hour)
+  const viewerCount = ((product.id.charCodeAt(0) + new Date().getHours()) % 15) + 3;
 
   return (
     <div className="container mx-auto px-4 py-6 sm:py-8">
@@ -120,24 +143,24 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
 
       {/* Breadcrumb */}
-      <nav className="mb-6 flex items-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
-        <Link href="/" className="hover:text-primary transition-colors">
+      <nav className="mb-6 flex items-center gap-1.5 text-xs text-muted-foreground sm:text-sm overflow-x-auto whitespace-nowrap pb-1">
+        <Link href="/" className="hover:text-primary transition-colors shrink-0">
           Home
         </Link>
-        <ChevronRight className="h-3 w-3 opacity-40" />
-        <Link href="/products" className="hover:text-primary transition-colors">
+        <ChevronRight className="h-3 w-3 opacity-40 shrink-0" />
+        <Link href="/products" className="hover:text-primary transition-colors shrink-0">
           All Sarees
         </Link>
-        <ChevronRight className="h-3 w-3 opacity-40" />
+        <ChevronRight className="h-3 w-3 opacity-40 shrink-0" />
         {product.category && (
           <>
             <Link
               href={`/products?category=${product.category.slug}`}
-              className="hover:text-primary transition-colors"
+              className="hover:text-primary transition-colors shrink-0"
             >
               {product.category.name}
             </Link>
-            <ChevronRight className="h-3 w-3 opacity-40" />
+            <ChevronRight className="h-3 w-3 opacity-40 shrink-0" />
           </>
         )}
         <span className="text-foreground font-medium line-clamp-1">{product.name}</span>
@@ -167,6 +190,32 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 {product.shortDescription}
               </p>
             )}
+
+            {/* Inline rating badge */}
+            {avgRating !== null && (
+              <div className="mt-3 flex items-center gap-2">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      className={`h-4 w-4 ${
+                        s <= Math.round(avgRating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "fill-muted text-muted-foreground/30"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-sm font-semibold">{avgRating.toFixed(1)}</span>
+                <a
+                  href="#reviews"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  ({reviewCount}{reviewCount === 10 ? "+" : ""} reviews)
+                </a>
+              </div>
+            )}
+
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="text-3xl font-bold text-primary sm:text-4xl" style={{ fontFamily: "var(--font-heading)" }}>
                 {formatPrice(Number(product.price))}
@@ -227,62 +276,93 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <Separator />
 
           {/* Key Details */}
-          <div className="grid grid-cols-2 gap-3 rounded-xl bg-muted/30 p-4 text-sm ring-1 ring-border/50">
-            <div>
-              <span className="text-muted-foreground">Fabric:</span>{" "}
-              <span className="font-medium">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl bg-muted/30 p-4 sm:p-5 text-sm ring-1 ring-border/50">
+            <div className="space-y-0.5">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Fabric</span>
+              <p className="font-medium">
                 {FABRIC_LABELS[product.fabric as keyof typeof FABRIC_LABELS] || product.fabric}
-              </span>
+              </p>
             </div>
             {product.occasion && product.occasion.length > 0 && (
-              <div>
-                <span className="text-muted-foreground">Occasion:</span>{" "}
-                <span className="font-medium">
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Occasion</span>
+                <p className="font-medium">
                   {(product.occasion as string[]).map((o) => OCCASION_LABELS[o as keyof typeof OCCASION_LABELS] || o).join(", ")}
-                </span>
+                </p>
               </div>
             )}
             {product.color && (
-              <div>
-                <span className="text-muted-foreground">Color:</span>{" "}
-                <span className="font-medium">{product.color}</span>
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Color</span>
+                <p className="font-medium">{product.color}</p>
               </div>
             )}
             {product.blouseIncluded !== null && (
-              <div>
-                <span className="text-muted-foreground">Blouse:</span>{" "}
-                <span className="font-medium">
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Blouse</span>
+                <p className="font-medium">
                   {product.blouseIncluded ? "Included" : "Not included"}
-                </span>
+                </p>
               </div>
             )}
             {product.borderType && (
-              <div>
-                <span className="text-muted-foreground">Border:</span>{" "}
-                <span className="font-medium">{product.borderType}</span>
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Border</span>
+                <p className="font-medium">{product.borderType}</p>
               </div>
             )}
             {product.zariType && (
-              <div>
-                <span className="text-muted-foreground">Zari:</span>{" "}
-                <span className="font-medium">{product.zariType}</span>
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Zari</span>
+                <p className="font-medium">{product.zariType}</p>
               </div>
             )}
             {product.length && (
-              <div>
-                <span className="text-muted-foreground">Length:</span>{" "}
-                <span className="font-medium">{product.length}</span>
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Length</span>
+                <p className="font-medium">{product.length}</p>
               </div>
             )}
             {product.width && (
-              <div>
-                <span className="text-muted-foreground">Width:</span>{" "}
-                <span className="font-medium">{product.width}</span>
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Width</span>
+                <p className="font-medium">{product.width}</p>
+              </div>
+            )}
+            {product.weight && (
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Weight</span>
+                <p className="font-medium">{product.weight}</p>
+              </div>
+            )}
+            {product.blouseIncluded && product.blouseLength && (
+              <div className="space-y-0.5">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Blouse Length</span>
+                <p className="font-medium">{product.blouseLength}</p>
+              </div>
+            )}
+            {product.sku && (
+              <div className="space-y-0.5 col-span-2">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">SKU</span>
+                <p className="font-medium font-mono text-xs text-muted-foreground">{product.sku}</p>
               </div>
             )}
           </div>
 
           <Separator />
+
+          {/* Social proof */}
+          {product.stock > 0 && (
+            <div className="flex items-center gap-2 rounded-xl bg-red-50/60 px-3.5 py-2.5 text-sm ring-1 ring-red-100 dark:bg-red-950/20 dark:ring-red-900/30">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+              </span>
+              <span className="text-red-700 dark:text-red-400 font-medium">
+                {viewerCount} people are viewing this right now
+              </span>
+            </div>
+          )}
 
           {/* Add to Cart */}
           <AddToCartButton
@@ -294,46 +374,50 @@ export default async function ProductPage({ params }: ProductPageProps) {
               stock: product.stock,
               image: product.images[0]?.url,
             }}
+            showBuyNow
           />
+
+          {/* Pincode Checker */}
+          <PincodeChecker />
 
           {/* Trust signals */}
           <div className="grid grid-cols-2 gap-2.5">
-            <div className="flex items-center gap-2.5 rounded-lg bg-muted/30 p-2.5 text-sm text-muted-foreground ring-1 ring-border/30">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Truck className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-2.5 rounded-xl bg-muted/30 p-3 text-sm text-muted-foreground ring-1 ring-border/30 transition-all hover:ring-primary/20 hover:bg-muted/40">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 ring-1 ring-blue-100 dark:bg-blue-950/30 dark:ring-blue-900/30">
+                <Truck className="h-4 w-4 text-blue-600" />
               </div>
-              <span className="text-xs font-medium">
+              <span className="text-xs font-medium leading-tight">
                 {Number(product.price) >= 1500 ? "Free Shipping" : "₹99 shipping"}
               </span>
             </div>
-            <div className="flex items-center gap-2.5 rounded-lg bg-muted/30 p-2.5 text-sm text-muted-foreground ring-1 ring-border/30">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <Shield className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-2.5 rounded-xl bg-muted/30 p-3 text-sm text-muted-foreground ring-1 ring-border/30 transition-all hover:ring-primary/20 hover:bg-muted/40">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 ring-1 ring-emerald-100 dark:bg-emerald-950/30 dark:ring-emerald-900/30">
+                <Shield className="h-4 w-4 text-emerald-600" />
               </div>
-              <span className="text-xs font-medium">100% Authentic</span>
+              <span className="text-xs font-medium leading-tight">100% Authentic</span>
             </div>
-            <div className="flex items-center gap-2.5 rounded-lg bg-muted/30 p-2.5 text-sm text-muted-foreground ring-1 ring-border/30">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <RotateCcw className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-2.5 rounded-xl bg-muted/30 p-3 text-sm text-muted-foreground ring-1 ring-border/30 transition-all hover:ring-primary/20 hover:bg-muted/40">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:ring-amber-900/30">
+                <RotateCcw className="h-4 w-4 text-amber-600" />
               </div>
-              <span className="text-xs font-medium">Easy Returns</span>
+              <span className="text-xs font-medium leading-tight">7 Day Returns</span>
             </div>
-            <div className="flex items-center gap-2.5 rounded-lg bg-muted/30 p-2.5 text-sm text-muted-foreground ring-1 ring-border/30">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <MessageCircle className="h-4 w-4 text-primary" />
+            <div className="flex items-center gap-2.5 rounded-xl bg-muted/30 p-3 text-sm text-muted-foreground ring-1 ring-border/30 transition-all hover:ring-primary/20 hover:bg-muted/40">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-50 ring-1 ring-purple-100 dark:bg-purple-950/30 dark:ring-purple-900/30">
+                <MessageCircle className="h-4 w-4 text-purple-600" />
               </div>
-              <span className="text-xs font-medium">WhatsApp Support</span>
+              <span className="text-xs font-medium leading-tight">WhatsApp Support</span>
             </div>
           </div>
 
-          <div className="rounded-xl bg-gradient-to-r from-primary/5 to-secondary/5 p-4 text-sm ring-1 ring-border/50">
-            <p className="font-semibold" style={{ fontFamily: "var(--font-heading)" }}>Estimated Delivery</p>
+          <div className="rounded-2xl bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 p-4 text-sm ring-1 ring-border/50">
+            <p className="font-semibold" style={{ fontFamily: "var(--font-heading)" }}>📦 Estimated Delivery</p>
             <p className="mt-0.5 text-muted-foreground">{deliveryEstimate.from} – {deliveryEstimate.to}</p>
           </div>
 
           {/* WhatsApp inquiry */}
           <div className="flex flex-col gap-2.5">
-            <Button variant="outline" className="w-full rounded-xl border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800" asChild>
+            <Button variant="outline" className="w-full rounded-xl border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 hover:border-green-300 transition-all" asChild>
               <a
                 href={`https://wa.me/91${siteConfig.whatsapp}?text=${encodeURIComponent(`Hi! I'm interested in "${product.name}" (${product.sku}). Can you share more details?`)}`}
                 target="_blank"
@@ -423,6 +507,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
           fabric: product.fabric as string,
         }}
       />
+
+      {/* Sticky Add to Cart for Mobile */}
+      <StickyAddToCart
+        product={{
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          price: Number(product.price),
+          compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+          stock: product.stock,
+          image: product.images[0]?.url,
+        }}
+      />
     </div>
   );
 }
@@ -439,13 +536,15 @@ async function RelatedProducts({
 
   return (
     <div className="mt-16">
-      <h2
-        className="text-xl font-bold tracking-tight sm:text-2xl"
-        style={{ fontFamily: "var(--font-heading)" }}
-      >
-        You May Also Like
-      </h2>
-      <div className="mt-3 h-0.5 w-12 rounded-full bg-gradient-to-r from-primary/60 to-transparent" />
+      <div className="flex items-center gap-3">
+        <h2
+          className="text-xl font-bold tracking-tight sm:text-2xl"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          You May Also Like
+        </h2>
+        <div className="h-px flex-1 bg-gradient-to-r from-border to-transparent" />
+      </div>
       <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         {related.map((product: any) => (
           <ProductCard key={product.id} product={product} />

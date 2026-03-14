@@ -37,7 +37,7 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const shippingAddress = order.shippingAddress as any;
+  const shippingAddress = order.shippingAddress as Record<string, string> | null;
 
   // Return order data as JSON for client-side PDF generation
   return NextResponse.json({

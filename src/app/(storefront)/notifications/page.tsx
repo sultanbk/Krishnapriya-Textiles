@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Bell, Package, CheckCheck, ChevronRight } from "lucide-react";
-import { getUserNotifications, markAllNotificationsRead } from "@/actions/notifications";
+import { Bell, Package, ChevronRight } from "lucide-react";
+import { getUserNotifications } from "@/actions/notifications";
+import type { NotificationItem } from "@/actions/notifications";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ export default async function NotificationsPage() {
   const session = await getSession();
   if (!session) redirect("/login?callbackUrl=/notifications");
 
-  const { items: notifications, unreadCount, total } = await getUserNotifications(1, 50);
+  const { items: notifications, unreadCount } = await getUserNotifications(1, 50);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-10">
@@ -102,7 +103,7 @@ function NotificationIcon({ isRead }: { isRead: boolean }) {
   );
 }
 
-function NotificationBody({ notification }: { notification: any }) {
+function NotificationBody({ notification }: { notification: NotificationItem }) {
   const d = new Date(notification.createdAt);
   const timeStr = d.toLocaleDateString("en-IN", {
     day: "numeric",

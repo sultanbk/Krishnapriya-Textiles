@@ -123,10 +123,10 @@ export default function AdminSiteImagesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 animate-fade-in">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Site Images</h1>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">Site Images</h1>
           <p className="text-sm text-muted-foreground">
             Manage all key images across the website from one place
           </p>

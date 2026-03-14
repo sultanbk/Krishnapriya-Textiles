@@ -8,13 +8,17 @@ import { ProductGridWithLoadMore } from "@/components/product/product-grid-load-
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { CollectionPageJsonLd } from "@/components/seo/json-ld";
+import { FABRIC_LABELS, OCCASION_LABELS } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "All Sarees | Krishnapriya Textiles",
   description:
     "Browse our curated collection of 500+ sarees — silk, cotton, chiffon and more. Free shipping on orders above ₹1500.",
+  alternates: {
+    canonical: "/products",
+  },
 };
 
 interface ProductsPageProps {
@@ -27,6 +31,7 @@ interface ProductsPageProps {
     minPrice?: string;
     maxPrice?: string;
     search?: string;
+    inStock?: string;
   }>;
 }
 
@@ -57,6 +62,7 @@ async function ProductsContent({
     minPrice?: string;
     maxPrice?: string;
     search?: string;
+    inStock?: string;
   };
 }) {
   const page = Number(searchParams.page) || 1;
@@ -71,6 +77,7 @@ async function ProductsContent({
       minPrice: searchParams.minPrice ? Number(searchParams.minPrice) : undefined,
       maxPrice: searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined,
       search: searchParams.search,
+      inStock: searchParams.inStock === "true",
     }),
     getCategories(),
   ]);
@@ -78,6 +85,54 @@ async function ProductsContent({
   const products = productsResult.items || [];
   const pagination = productsResult;
   const categories = categoriesResult || [];
+
+  // Build active filter chip URLs
+  function removeFilterUrl(overrides: Record<string, string | undefined>) {
+    const merged: Record<string, string> = {};
+    for (const [k, v] of Object.entries(searchParams)) {
+      if (v) merged[k] = v;
+    }
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v) merged[k] = v;
+      else delete merged[k];
+    }
+    delete merged.page;
+    const qs = new URLSearchParams(merged).toString();
+    return qs ? `/products?${qs}` : "/products";
+  }
+
+  const activeChips: { label: string; href: string }[] = [];
+  if (searchParams.inStock === "true") {
+    activeChips.push({ label: "In Stock Only", href: removeFilterUrl({ inStock: undefined }) });
+  }
+  if (searchParams.category) {
+    const catName = categories.find((c: { slug: string; name: string }) => c.slug === searchParams.category)?.name || searchParams.category;
+    activeChips.push({ label: catName, href: removeFilterUrl({ category: undefined }) });
+  }
+  const fabrics = searchParams.fabric?.split(",").filter(Boolean) || [];
+  for (const fab of fabrics) {
+    const remaining = fabrics.filter((f) => f !== fab).join(",");
+    activeChips.push({
+      label: FABRIC_LABELS[fab as keyof typeof FABRIC_LABELS] || fab,
+      href: removeFilterUrl({ fabric: remaining || undefined }),
+    });
+  }
+  const occasions = searchParams.occasion?.split(",").filter(Boolean) || [];
+  for (const occ of occasions) {
+    const remaining = occasions.filter((o) => o !== occ).join(",");
+    activeChips.push({
+      label: OCCASION_LABELS[occ as keyof typeof OCCASION_LABELS] || occ,
+      href: removeFilterUrl({ occasion: remaining || undefined }),
+    });
+  }
+  if (searchParams.minPrice || searchParams.maxPrice) {
+    const min = searchParams.minPrice ? `₹${searchParams.minPrice}` : "";
+    const max = searchParams.maxPrice ? `₹${searchParams.maxPrice}` : "";
+    activeChips.push({
+      label: min && max ? `${min} – ${max}` : min || max,
+      href: removeFilterUrl({ minPrice: undefined, maxPrice: undefined }),
+    });
+  }
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
@@ -99,14 +154,36 @@ async function ProductsContent({
       </Suspense>
 
       <div className="flex-1 min-w-0">
+        {/* Active filter chips */}
+        {activeChips.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium">Active:</span>
+            {activeChips.map((chip) => (
+              <Link
+                key={chip.label + chip.href}
+                href={chip.href}
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary ring-1 ring-primary/20 hover:bg-primary/20 transition-colors"
+              >
+                {chip.label}
+                <X className="h-3 w-3 opacity-60" />
+              </Link>
+            ))}
+            <Link
+              href="/products"
+              className="text-xs text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
+            >
+              Clear all
+            </Link>
+          </div>
+        )}
+
         {/* Sort and count header */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/30 p-3 ring-1 ring-border/50 sm:p-4">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-muted/30 p-3 ring-1 ring-border/40 backdrop-blur-sm sm:p-4">
           <p className="text-sm text-muted-foreground">
-            {pagination ? (
+            {pagination && pagination.total > 0 ? (
               <>
-                Showing {(page - 1) * 12 + 1}–
-                {Math.min(page * 12, pagination.total)} of {pagination.total}{" "}
-                sarees
+                Showing <span className="font-medium text-foreground">{(page - 1) * 12 + 1}–{Math.min(page * 12, pagination.total)}</span> of{" "}
+                <span className="font-medium text-foreground">{pagination.total}</span> sarees
               </>
             ) : (
               "No products found"
@@ -131,18 +208,19 @@ async function ProductsContent({
               minPrice: searchParams.minPrice ? Number(searchParams.minPrice) : undefined,
               maxPrice: searchParams.maxPrice ? Number(searchParams.maxPrice) : undefined,
               search: searchParams.search,
+              inStock: searchParams.inStock === "true",
             }}
           />
         ) : (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted/20 py-20 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-muted shadow-inner">
               <Search className="h-7 w-7 text-muted-foreground/50" />
             </div>
-            <p className="mt-4 text-lg font-semibold" style={{ fontFamily: "var(--font-heading)" }}>No sarees found</p>
+            <p className="mt-5 text-lg font-semibold" style={{ fontFamily: "var(--font-heading)" }}>No sarees found</p>
             <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
               Try adjusting your filters or search terms to discover more sarees
             </p>
-            <Button asChild variant="outline" className="mt-6 rounded-xl">
+            <Button asChild variant="outline" className="mt-6 rounded-full px-6">
               <Link href="/products">Clear all filters</Link>
             </Button>
           </div>
@@ -158,13 +236,17 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     <div className="container mx-auto px-4 py-8 sm:py-10">
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: "var(--font-heading)" }}>
+        <p className="text-[11px] uppercase tracking-[0.25em] text-secondary font-medium">Our Collection</p>
+        <h1 className="mt-1.5 text-3xl font-bold tracking-tight sm:text-4xl" style={{ fontFamily: "var(--font-heading)" }}>
           {params.search ? `Search: "${params.search}"` : "All Sarees"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground sm:text-base">
           Discover our handpicked collection of premium sarees
         </p>
-        <div className="mt-3 h-0.5 w-12 rounded-full bg-gradient-to-r from-primary/60 to-transparent" />
+        <div className="mt-3 flex items-center gap-2">
+          <div className="h-0.5 w-8 rounded-full bg-primary/60" />
+          <div className="h-0.5 w-3 rounded-full bg-secondary/60" />
+        </div>
 
         {/* Search Bar */}
         <div className="mt-5 max-w-xl">

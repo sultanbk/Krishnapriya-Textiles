@@ -25,23 +25,23 @@ import {
 const ORDER_STATUSES = [
   { value: "PENDING", label: "⏳ Pending — New order, not yet checked" },
   { value: "CONFIRMED", label: "✅ Confirmed — You accepted the order" },
-  { value: "PROCESSING", label: "🧵 Processing — Being packed" },
+  { value: "PROCESSING", label: "🧵 Processing — Being prepared" },
+  { value: "PACKED", label: "📦 Packed — Ready for shipping" },
   { value: "SHIPPED", label: "🚚 Shipped — Sent for delivery" },
-  { value: "OUT_FOR_DELIVERY", label: "📦 Out for Delivery" },
   { value: "DELIVERED", label: "🎉 Delivered — Customer received it" },
   { value: "CANCELLED", label: "❌ Cancelled" },
-  { value: "RETURNED", label: "🔄 Returned" },
+  { value: "REFUNDED", label: "💰 Refunded" },
 ];
 
 const STATUS_SHORT_LABELS: Record<string, string> = {
   PENDING: "Pending",
   CONFIRMED: "Confirmed",
   PROCESSING: "Processing",
+  PACKED: "Packed",
   SHIPPED: "Shipped",
-  OUT_FOR_DELIVERY: "Out for Delivery",
   DELIVERED: "Delivered",
   CANCELLED: "Cancelled",
-  RETURNED: "Returned",
+  REFUNDED: "Refunded",
 };
 
 interface OrderStatusUpdateProps {

@@ -52,7 +52,7 @@ export default async function CategoriesPage() {
                   <div className="flex h-full items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
                     <span
                       className="text-4xl font-bold text-primary/20"
-                      style={{ fontFamily: "var(--font-display)" }}
+                      style={{ fontFamily: "var(--font-heading)" }}
                     >
                       {category.name.charAt(0)}
                     </span>

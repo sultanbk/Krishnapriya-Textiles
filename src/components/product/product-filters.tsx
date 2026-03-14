@@ -91,11 +91,13 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
 
   const fabricCount = searchParams.get("fabric")?.split(",").filter(Boolean).length || 0;
   const occasionCount = searchParams.get("occasion")?.split(",").filter(Boolean).length || 0;
+  const isInStock = searchParams.get("inStock") === "true";
   const activeCount = [
     fabricCount > 0,
     occasionCount > 0,
     searchParams.get("category"),
     searchParams.get("minPrice") || searchParams.get("maxPrice"),
+    isInStock,
   ].filter(Boolean).length;
 
   const filterContent = (
@@ -108,6 +110,17 @@ export function ProductFilters({ categories }: ProductFiltersProps) {
           </Button>
         </div>
       )}
+      {/* In Stock Only */}
+      <label className="flex items-center gap-2 cursor-pointer py-2 border-b">
+        <Checkbox
+          checked={isInStock}
+          onCheckedChange={() =>
+            router.push(`${pathname}?${createQueryString("inStock", isInStock ? "" : "true")}`)
+          }
+        />
+        <span className="text-sm font-medium">In Stock Only</span>
+      </label>
+
       <Accordion type="multiple" defaultValue={["category", "fabric", "price", "occasion"]}>
         {/* Category */}
         <AccordionItem value="category">

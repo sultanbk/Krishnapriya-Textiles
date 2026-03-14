@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Star, ThumbsUp, User } from "lucide-react";
+import { Star, ThumbsUp, User, Camera } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ReviewForm } from "./review-form";
 
@@ -9,6 +10,7 @@ interface Review {
   id: string;
   rating: number;
   comment: string | null;
+  photos: string[];
   createdAt: string;
   user: { name: string | null };
 }
@@ -155,6 +157,30 @@ export function ProductReviews({ productId, productName }: ProductReviewsProps) 
                 <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                   {review.comment}
                 </p>
+              )}
+              {review.photos && review.photos.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {review.photos.map((photo, i) => (
+                    <a
+                      key={i}
+                      href={photo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative h-20 w-20 overflow-hidden rounded-lg border bg-muted transition-transform hover:scale-105"
+                    >
+                      <Image
+                        src={photo}
+                        alt={`Review photo ${i + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
+                        <Camera className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </a>
+                  ))}
+                </div>
               )}
             </div>
           ))}

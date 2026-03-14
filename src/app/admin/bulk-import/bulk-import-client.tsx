@@ -82,8 +82,8 @@ export function BulkImportClient() {
       if (data.errors > 0) {
         toast.error(`${data.errors} products had errors`);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to import products");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to import products");
     } finally {
       setUploading(false);
     }

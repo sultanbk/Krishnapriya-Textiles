@@ -223,6 +223,7 @@ model Cart {
   id        String   @id @default(cuid())
   userId    String?  @unique
   sessionId String?  @unique
+  abandonedEmailSent Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -230,6 +231,7 @@ model Cart {
   items CartItem[]
 
   @@index([sessionId])
+  @@index([updatedAt])
 }
 
 model CartItem {
@@ -371,6 +373,7 @@ model Review {
   userId    String
   rating    Int
   comment   String?
+  photos    String[] @default([])
   isVisible Boolean  @default(true)
 
   createdAt DateTime @default(now())

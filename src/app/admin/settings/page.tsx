@@ -3,10 +3,10 @@ import { siteConfig } from "@/config/site";
 
 export default function AdminSettingsPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 animate-fade-in">
       <div>
-        <h1 className="font-heading text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Store configuration</p>
+        <h1 className="font-heading text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">Store configuration</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
